@@ -11,14 +11,15 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.SeekBar;
 import android.widget.Switch;
+
 import com.devsonics.thoughtpong.R;
+import com.google.firebase.auth.FirebaseAuth;
 
 
 public class SettingFragment extends Fragment {
     SeekBar seekBarVolume;
     Switch aSwitchStartupVolume;
-    ConstraintLayout btnPrivacyPolicy,btnTermsConditions,btnContactUs,btnShareApp;
-
+    ConstraintLayout btnPrivacyPolicy, btnTermsConditions, btnContactUs, btnShareApp, btnLogout;
 
 
     public SettingFragment() {
@@ -29,18 +30,25 @@ public class SettingFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View view=inflater.inflate(R.layout.fragment_setting, container, false);
+        View view = inflater.inflate(R.layout.fragment_setting, container, false);
         seekBarVolume = view.findViewById(R.id.seekbar_volume);
         aSwitchStartupVolume = view.findViewById(R.id.sw_start_sound);
-        btnPrivacyPolicy= view.findViewById(R.id.btn_privacy_policy);
+        btnPrivacyPolicy = view.findViewById(R.id.btn_privacy_policy);
         btnTermsConditions = view.findViewById(R.id.btn_terms_conditions);
         btnContactUs = view.findViewById(R.id.btn_contact_us);
         btnShareApp = view.findViewById(R.id.btn_share_app);
+        btnLogout = view.findViewById(R.id.btn_logout);
         btnPrivacyPolicy.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(getContext(), PrivacyPolicy.class));
             }
+        });
+
+        btnLogout.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+            startActivity(new Intent(requireActivity(), Login.class));
+            requireActivity().finishAffinity();
         });
 
         return view;

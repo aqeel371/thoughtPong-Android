@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "282511530371",
+    "project_id": "thought-pong",
+    "storage_bucket": "thought-pong.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:282511530371:android:51da2510be9597d917beb6",
+        "android_client_info": {
+          "package_name": "com.devsonics.thoughtpong"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDf8DFuZqXsqwNawKJErhmZEj9GmgJDNHs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

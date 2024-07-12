@@ -7,6 +7,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.ActivityInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -15,7 +16,11 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import com.google.i18n.phonenumbers.Phonenumber;
 import com.hbb20.CountryCodePicker;
 import com.devsonics.thoughtpong.R;
 
@@ -31,6 +36,7 @@ public class Login extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Window window = getWindow();
             window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
@@ -50,6 +56,10 @@ public class Login extends AppCompatActivity {
                 if (editTextCarrierNumber.getText().toString().isEmpty()) {
                     editTextCarrierNumber.setError("Please Enter Phone Number");
                 } else {
+                    if (!validatePhoneNumber()) {
+                        Toast.makeText(Login.this, "Invalid Number", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
                     Intent intent = new Intent(Login.this, Verification.class);
                     startActivity(intent);
                 }
@@ -73,10 +83,28 @@ public class Login extends AppCompatActivity {
         };
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(verificationCompleteReceiver, new IntentFilter("VERIFICATION_COMPLETE"), RECEIVER_EXPORTED);
-        }else {
+        } else {
             registerReceiver(verificationCompleteReceiver, new IntentFilter("VERIFICATION_COMPLETE"));
         }
 
+    }
+
+    private Boolean validatePhoneNumber() {
+        String countryCode = ccp.getSelectedCountryCode();
+        String phoneNumber = editTextCarrierNumber.getText().toString();
+
+        return isValidPhoneNumber(phoneNumber, countryCode);
+    }
+
+    private boolean isValidPhoneNumber(String phoneNumber, String countryCode) {
+        PhoneNumberUtil phoneNumberUtil = PhoneNumberUtil.getInstance();
+        try {
+            Phonenumber.PhoneNumber numberProto = phoneNumberUtil.parse("+" + countryCode + phoneNumber, null);
+            return phoneNumberUtil.isValidNumber(numberProto);
+        } catch (NumberParseException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     @Override

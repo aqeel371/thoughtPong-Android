@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="tag_margin">2dp</dimen>
+    <dimen name="tag_margin_vertical">20dp</dimen>
+    <dimen name="tag_margin_horizontal">20dp</dimen>
+    <dimen name="custm_indicator">52dp</dimen>
+</resources>

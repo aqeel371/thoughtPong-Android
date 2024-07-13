@@ -19,8 +19,8 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.devsonics.thoughtpong.dialog.MessageDialogFragment;
 import com.devsonics.thoughtpong.token_manager.TokenManager;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -51,6 +51,7 @@ public class Login extends AppCompatActivity {
     private String LogInTAG = "LogInTAG";
     private String phNum = "";
     private ProgressDialog progressDialog;
+    MessageDialogFragment dialogFragment = new MessageDialogFragment();
 
 
     @Override
@@ -86,7 +87,7 @@ public class Login extends AppCompatActivity {
                     editTextCarrierNumber.setError("Please Enter Phone Number");
                 } else {
                     if (!validatePhoneNumber()) {
-                        Toast.makeText(Login.this, "Invalid Number", Toast.LENGTH_SHORT).show();
+                        showDialogMessage("Invalid Number");
                         return;
                     }
                     String countryCode = ccp.getSelectedCountryCodeWithPlus();
@@ -162,8 +163,7 @@ public class Login extends AppCompatActivity {
             public void onVerificationFailed(@NonNull FirebaseException e) {
                 hideProgress();
                 Log.d(LogInTAG, "Verification Failed = " + e.getMessage());
-                Toast.makeText(Login.this, "Verification failed\n" + e.getMessage(), Toast.LENGTH_SHORT).show();
-
+                showDialogMessage("Verification Failed");
             }
 
             @Override
@@ -199,9 +199,9 @@ public class Login extends AppCompatActivity {
                         } else {
                             // Sign in failed, display a message and update the UI
                             if (task.getException() instanceof FirebaseAuthInvalidCredentialsException) {
-                                Toast.makeText(Login.this, "Invalid Code", Toast.LENGTH_SHORT).show();
+                                showDialogMessage("Invalid Code");
                             } else {
-                                Toast.makeText(Login.this, "Invalid", Toast.LENGTH_SHORT).show();
+                                showDialogMessage("Signing Failed");
                             }
                         }
                     }
@@ -238,6 +238,21 @@ public class Login extends AppCompatActivity {
         // Unregister the broadcast receiver
         if (verificationCompleteReceiver != null) {
             unregisterReceiver(verificationCompleteReceiver);
+        }
+    }
+
+    private void showDialogMessage(String message) {
+        dialogFragment.setMessage(message);
+        dialogFragment.show(getSupportFragmentManager(), MessageDialogFragment.DIALOG_TAG);
+    }
+
+    void hideDialogMessage() {
+        if (dialogFragment.getDialog() != null) {
+            if (dialogFragment.getDialog().isShowing()) {
+                dialogFragment.dismiss();
+            }
+        } else {
+            dialogFragment.dismiss();
         }
     }
 }

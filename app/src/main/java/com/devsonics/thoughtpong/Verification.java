@@ -20,14 +20,13 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
+import com.devsonics.thoughtpong.dialog.MessageDialogFragment;
 import com.devsonics.thoughtpong.token_manager.TokenManager;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
-import com.devsonics.thoughtpong.R;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
@@ -48,6 +47,7 @@ public class Verification extends AppCompatActivity {
     private String VerificationTAG = "VerificationTAG";
     private String verificationId = "", phoneNumber = "";
     private ProgressDialog progressDialog;
+    MessageDialogFragment dialogFragment = new MessageDialogFragment();
 
 
 
@@ -254,13 +254,13 @@ public class Verification extends AppCompatActivity {
                         otp4.getText().toString().isEmpty() ||
                         otp5.getText().toString().isEmpty() ||
                         otp6.getText().toString().isEmpty()) {
-                    Toast.makeText(Verification.this, "Incomplete Verification Code", Toast.LENGTH_SHORT).show();
+                    showDialogMessage("Incomplete Verification Code");
                     return;
                 }
                 otp = otp1.getText().toString() + otp2.getText().toString() + otp3.getText().toString() + otp4.getText().toString() + otp5.getText().toString() + otp6.getText().toString();
                 // OTP verification code here
                 if (verificationId == null || verificationId.isEmpty()) {
-                    Toast.makeText(Verification.this, "Unable to fetch verificationId", Toast.LENGTH_SHORT).show();
+                    showDialogMessage("Unable to fetch verificationId");
                     return;
                 }
                 showProgress();
@@ -293,9 +293,9 @@ public class Verification extends AppCompatActivity {
                         } else {
                             // Sign in failed, display a message and update the UI
                             if (task.getException() instanceof FirebaseAuthInvalidCredentialsException) {
-                                Toast.makeText(Verification.this, "Invalid Code", Toast.LENGTH_SHORT).show();
+                                showDialogMessage("Invalid Code");
                             } else {
-                                Toast.makeText(Verification.this, "Invalid Verification " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                                showDialogMessage("Signing Failed");
                             }
                         }
                     }
@@ -331,8 +331,7 @@ public class Verification extends AppCompatActivity {
             public void onVerificationFailed(@NonNull FirebaseException e) {
                 hideProgress();
                 Log.d(VerificationTAG, "Verification Failed = " + e.getMessage());
-                Toast.makeText(Verification.this, "Verification failed\n" + e.getMessage(), Toast.LENGTH_SHORT).show();
-
+                showDialogMessage("Verification Failed");
             }
 
             @Override
@@ -340,7 +339,7 @@ public class Verification extends AppCompatActivity {
                 super.onCodeSent(verificationId, forceResendingToken);
                 Log.d(VerificationTAG, "Code Sent");
                 hideProgress();
-                Toast.makeText(Verification.this, "Code Resend Successfully", Toast.LENGTH_SHORT).show();
+                showDialogMessage("Code has been Resend");
                 Verification.this.verificationId = verificationId;
                 TokenManager.getInstance().setForceResendingToken(forceResendingToken);
             }
@@ -371,6 +370,21 @@ public class Verification extends AppCompatActivity {
         if (progressDialog == null)
             initProgressDialog();
         progressDialog.hide();
+    }
+
+    private void showDialogMessage(String message) {
+        dialogFragment.setMessage(message);
+        dialogFragment.show(getSupportFragmentManager(), MessageDialogFragment.DIALOG_TAG);
+    }
+
+    void hideDialogMessage() {
+        if (dialogFragment.getDialog() != null) {
+            if (dialogFragment.getDialog().isShowing()) {
+                dialogFragment.dismiss();
+            }
+        } else {
+            dialogFragment.dismiss();
+        }
     }
 
 }

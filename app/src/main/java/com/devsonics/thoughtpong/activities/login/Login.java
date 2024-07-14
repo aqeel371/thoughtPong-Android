@@ -1,4 +1,4 @@
-package com.devsonics.thoughtpong;
+package com.devsonics.thoughtpong.activities.login;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,6 +20,10 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.devsonics.thoughtpong.activities.signup.CreateAccount;
+import com.devsonics.thoughtpong.MainActivity;
+import com.devsonics.thoughtpong.R;
+import com.devsonics.thoughtpong.activities.verification.Verification;
 import com.devsonics.thoughtpong.dialog.MessageDialogFragment;
 import com.devsonics.thoughtpong.token_manager.TokenManager;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -59,12 +63,15 @@ public class Login extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             Window window = getWindow();
             window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
             window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
             window.setStatusBarColor(ContextCompat.getColor(this, R.color.transperant));
         }
+
 
         mAuth = FirebaseAuth.getInstance();
         initAuthCallback();
@@ -95,14 +102,12 @@ public class Login extends AppCompatActivity {
                     phNum = countryCode + phoneNumber;
                     Log.d(LogInTAG, "phone Number = " + phNum);
                     showProgress();
-                    PhoneAuthOptions options =
-                            PhoneAuthOptions.newBuilder(mAuth)
-                                    .setPhoneNumber(phNum)       // Phone number to verify
-                                    .setTimeout(60L, TimeUnit.SECONDS) // Timeout and unit
-                                    .setActivity(Login.this)                 // (optional) Activity for callback binding
-                                    // If no activity is passed, reCAPTCHA verification can not be used.
-                                    .setCallbacks(mCallbacks)          // OnVerificationStateChangedCallbacks
-                                    .build();
+                    PhoneAuthOptions options = PhoneAuthOptions.newBuilder(mAuth).setPhoneNumber(phNum)       // Phone number to verify
+                            .setTimeout(60L, TimeUnit.SECONDS) // Timeout and unit
+                            .setActivity(Login.this)                 // (optional) Activity for callback binding
+                            // If no activity is passed, reCAPTCHA verification can not be used.
+                            .setCallbacks(mCallbacks)          // OnVerificationStateChangedCallbacks
+                            .build();
                     PhoneAuthProvider.verifyPhoneNumber(options);
 
                 }
@@ -139,14 +144,12 @@ public class Login extends AppCompatActivity {
     }
 
     private void showProgress() {
-        if (progressDialog == null)
-            initProgressDialog();
+        if (progressDialog == null) initProgressDialog();
         progressDialog.show();
     }
 
     private void hideProgress() {
-        if (progressDialog == null)
-            initProgressDialog();
+        if (progressDialog == null) initProgressDialog();
         progressDialog.hide();
     }
 
@@ -188,29 +191,28 @@ public class Login extends AppCompatActivity {
     }
 
     void signInWithPhoneAuthCredential(PhoneAuthCredential credential) {
-        mAuth.signInWithCredential(credential)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        hideProgress();
-                        if (task.isSuccessful()) {
-                            startActivity(new Intent(getApplicationContext(), MainActivity.class));
-                            finish();
-                        } else {
-                            // Sign in failed, display a message and update the UI
-                            if (task.getException() instanceof FirebaseAuthInvalidCredentialsException) {
-                                showDialogMessage("Invalid Code");
-                            } else {
-                                showDialogMessage("Signing Failed");
-                            }
-                        }
+        mAuth.signInWithCredential(credential).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+            @Override
+            public void onComplete(@NonNull Task<AuthResult> task) {
+                hideProgress();
+                if (task.isSuccessful()) {
+                    startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                    finish();
+                } else {
+                    // Sign in failed, display a message and update the UI
+                    if (task.getException() instanceof FirebaseAuthInvalidCredentialsException) {
+                        showDialogMessage("Invalid Code");
+                    } else {
+                        showDialogMessage("Signing Failed");
                     }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        hideProgress();
-                    }
-                });
+                }
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                hideProgress();
+            }
+        });
     }
 
     private Boolean validatePhoneNumber() {

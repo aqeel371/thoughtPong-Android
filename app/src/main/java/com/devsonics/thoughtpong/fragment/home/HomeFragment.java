@@ -1,7 +1,10 @@
-package com.devsonics.thoughtpong;
+package com.devsonics.thoughtpong.fragment.home;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,14 +18,24 @@ import androidx.annotation.Nullable;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.constraintlayout.widget.ConstraintSet;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 
+import com.bumptech.glide.Glide;
+import com.devsonics.thoughtpong.CallScreenActivity;
+import com.devsonics.thoughtpong.MainActivity;
+import com.devsonics.thoughtpong.activities.verification.VerificationViewModel;
 import com.devsonics.thoughtpong.custumviews.Tag;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+
 import com.devsonics.thoughtpong.R;
+import com.devsonics.thoughtpong.retofit_api.model.ResponseGetTopic;
+import com.devsonics.thoughtpong.utils.Loader;
+import com.devsonics.thoughtpong.utils.NetworkResult;
 
 public class HomeFragment extends Fragment {
     LinearLayout letTalkButton;
@@ -33,10 +46,34 @@ public class HomeFragment extends Fragment {
     private List<Tag> tagList;
     private static final int COLUMNS = 3;
 
+    HomeViewModel viewModel;
+    private MainActivity mActivity;
+    Observer<? super NetworkResult<ResponseGetTopic>> topicsObserver;
+    Loader loader;
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        mActivity = (MainActivity) context;
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_home, container, false);
+
+        /**
+         **Initialize ViewModel with Factory**
+         */
+
+        ViewModelProvider.Factory factory = HomeViewModel.Companion.createFactory(mActivity.getApplication());
+        viewModel = new ViewModelProvider(this, factory).get(HomeViewModel.class);
+
+        loader = new Loader(mActivity);
+
+
+        initObserver();
+
 
         tagContainer = view.findViewById(R.id.tag_container);
         letTalkButton = view.findViewById(R.id.let_talk_button);
@@ -56,21 +93,38 @@ public class HomeFragment extends Fragment {
             }
         });
 
-        tagList = new ArrayList<>();
-        tagList.add(new Tag("Photography", R.drawable.ic_photography));
-        tagList.add(new Tag("Music", R.drawable.ic_music));
-        tagList.add(new Tag("Writing", R.drawable.ic_writing));
-        tagList.add(new Tag("Food", R.drawable.ic_food));
-        tagList.add(new Tag("Nature", R.drawable.ic_nature));
-        tagList.add(new Tag("Education", R.drawable.ic_education));
-        tagList.add(new Tag("Fashion", R.drawable.ic_fashion));
-        tagList.add(new Tag("Entertainment", R.drawable.ic_entertainment));
-        tagList.add(new Tag("Game", R.drawable.ic_game));
-        tagList.add(new Tag("Cooking", R.drawable.ic_cooking)); // New tag for Cooking
+        viewModel.getTopicsApi();
 
-        populateTagContainer();
 
         return view;
+    }
+
+    private void initObserver() {
+        topicsObserver = (Observer<NetworkResult<ResponseGetTopic>>) response -> {
+            if (response instanceof NetworkResult.Loading) {
+
+                loader.showProgress();
+            } else if (response instanceof NetworkResult.Success) {
+
+                tagList = new ArrayList<>();
+
+                for (ResponseGetTopic.ResponseGetTopicItem item : response.getData()) {
+                    tagList.add(new Tag(item.getName(), R.drawable.ic_photography, "https://bdpos.store/api/thought/Images/" + item.getName()));
+                }
+                populateTagContainer();
+
+                loader.hideProgress();
+
+            } else if (response instanceof NetworkResult.Error) {
+                Log.d("GetTopicsApiResponse", response.getResponseCode() + " " + response.getMessage());
+
+                loader.hideProgress();
+
+                loader.showDialogMessage(response.getMessage(), mActivity.getSupportFragmentManager());
+
+            }
+        };
+        viewModel.getGetTopicsLiveData().observe(getViewLifecycleOwner(), topicsObserver);
     }
 
     private void populateTagContainer() {
@@ -88,6 +142,8 @@ public class HomeFragment extends Fragment {
             TextView tagName = tagView.findViewById(R.id.tag_name);
 
             tagIcon.setImageResource(tag.getIconResId());
+            Glide.with(requireContext()).load(tag.getImageUrl()).into(tagIcon);
+
             tagName.setText(tag.getName());
 
             int id = View.generateViewId();
@@ -172,6 +228,6 @@ public class HomeFragment extends Fragment {
         // Show a toast or handle the tags as needed
         Toast.makeText(getActivity(), "Selected Tags: " + selectedTagNames, Toast.LENGTH_SHORT).show();
         // Add further logic to handle the selected tags
-        startActivity(new Intent(getContext(),CallScreenActivity.class));
+        startActivity(new Intent(getContext(), CallScreenActivity.class));
     }
 }

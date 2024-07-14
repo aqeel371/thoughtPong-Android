@@ -9,7 +9,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
 
-import com.devsonics.thoughtpong.R;
+import com.devsonics.thoughtpong.activities.login.Login;
+import com.devsonics.thoughtpong.utils.SharedPreferenceManager;
 import com.google.firebase.auth.FirebaseAuth;
 
 public class SplashScreen extends AppCompatActivity {
@@ -36,7 +37,7 @@ public class SplashScreen extends AppCompatActivity {
         handler.postDelayed(new Runnable() {
             @Override
             public void run() {
-                if (mAuth.getCurrentUser() != null) {
+                if (mAuth.getCurrentUser() != null && SharedPreferenceManager.INSTANCE.isUserLogin()) {
                     Intent intent = new Intent(SplashScreen.this, MainActivity.class);
                     startActivity(intent);
                     finish();

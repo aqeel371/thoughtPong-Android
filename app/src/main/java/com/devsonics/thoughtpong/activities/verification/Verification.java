@@ -1,11 +1,12 @@
-package com.devsonics.thoughtpong;
+package com.devsonics.thoughtpong.activities.verification;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 
 import android.annotation.SuppressLint;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.Build;
@@ -21,8 +22,16 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.devsonics.thoughtpong.activities.signup.CreateAccount;
+import com.devsonics.thoughtpong.MainActivity;
+import com.devsonics.thoughtpong.R;
 import com.devsonics.thoughtpong.dialog.MessageDialogFragment;
+import com.devsonics.thoughtpong.retofit_api.request_model.RequestLogin;
+import com.devsonics.thoughtpong.retofit_api.model.ResponseLogin;
 import com.devsonics.thoughtpong.token_manager.TokenManager;
+import com.devsonics.thoughtpong.utils.Loader;
+import com.devsonics.thoughtpong.utils.NetworkResult;
+import com.devsonics.thoughtpong.utils.SharedPreferenceManager;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.Task;
@@ -46,9 +55,9 @@ public class Verification extends AppCompatActivity {
     private PhoneAuthProvider.OnVerificationStateChangedCallbacks mCallbacks;
     private String VerificationTAG = "VerificationTAG";
     private String verificationId = "", phoneNumber = "";
-    private ProgressDialog progressDialog;
-    MessageDialogFragment dialogFragment = new MessageDialogFragment();
-
+    VerificationViewModel viewModel;
+    Observer<? super NetworkResult<ResponseLogin>> loginObserver;
+    Loader loader;
 
 
     @SuppressLint("SourceLockedOrientationActivity")
@@ -64,13 +73,22 @@ public class Verification extends AppCompatActivity {
             window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
             window.setStatusBarColor(ContextCompat.getColor(this, R.color.transperant));
         }
+        loader = new Loader(this);
+
+        /**
+         **Initialize ViewModel with Factory**
+         */
+
+        ViewModelProvider.Factory factory = VerificationViewModel.Companion.createFactory(getApplication());
+        viewModel = new ViewModelProvider(this, factory).get(VerificationViewModel.class);
+
+
+        initObserver();
 
         verificationId = getIntent().getStringExtra("verificationId");
         phoneNumber = getIntent().getStringExtra("phoneNumber");
         mAuth = FirebaseAuth.getInstance();
         initAuthCallback();
-
-        initProgressDialog();
 
 
         backButton = findViewById(R.id.btn_back);
@@ -248,22 +266,17 @@ public class Verification extends AppCompatActivity {
         verifyButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (otp1.getText().toString().isEmpty() ||
-                        otp2.getText().toString().isEmpty() ||
-                        otp3.getText().toString().isEmpty() ||
-                        otp4.getText().toString().isEmpty() ||
-                        otp5.getText().toString().isEmpty() ||
-                        otp6.getText().toString().isEmpty()) {
-                    showDialogMessage("Incomplete Verification Code");
+                if (otp1.getText().toString().isEmpty() || otp2.getText().toString().isEmpty() || otp3.getText().toString().isEmpty() || otp4.getText().toString().isEmpty() || otp5.getText().toString().isEmpty() || otp6.getText().toString().isEmpty()) {
+                    loader.showDialogMessage("Incomplete Verification Code", getSupportFragmentManager());
                     return;
                 }
                 otp = otp1.getText().toString() + otp2.getText().toString() + otp3.getText().toString() + otp4.getText().toString() + otp5.getText().toString() + otp6.getText().toString();
                 // OTP verification code here
                 if (verificationId == null || verificationId.isEmpty()) {
-                    showDialogMessage("Unable to fetch verificationId");
+                    loader.showDialogMessage("Unable to fetch verificationId", getSupportFragmentManager());
                     return;
                 }
-                showProgress();
+                loader.showProgress();
                 PhoneAuthCredential credential = PhoneAuthProvider.getCredential(verificationId, otp);
                 signInWithPhoneAuthCredential(credential);
 
@@ -278,40 +291,85 @@ public class Verification extends AppCompatActivity {
         });
     }
 
-    void signInWithPhoneAuthCredential(PhoneAuthCredential credential) {
-        mAuth.signInWithCredential(credential)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        hideProgress();
-                        if (task.isSuccessful()) {
-                            // If OTP verification is successful, send broadcast and finish
-                            Intent intent = new Intent("VERIFICATION_COMPLETE");
-                            sendBroadcast(intent);
-                            startActivity(new Intent(getApplicationContext(), MainActivity.class));
-                            finishAffinity();
-                        } else {
-                            // Sign in failed, display a message and update the UI
-                            if (task.getException() instanceof FirebaseAuthInvalidCredentialsException) {
-                                showDialogMessage("Invalid Code");
-                            } else {
-                                showDialogMessage("Signing Failed");
-                            }
-                        }
+    private void initObserver() {
+        loginObserver = (Observer<NetworkResult<ResponseLogin>>) responseLoginNetworkResult -> {
+            if (responseLoginNetworkResult instanceof NetworkResult.Loading) {
+
+                loader.showProgress();
+            } else if (responseLoginNetworkResult instanceof NetworkResult.Success) {
+
+                ResponseLogin responseLogin = responseLoginNetworkResult.getData();
+
+                if (responseLogin != null) {
+                    if (responseLogin.getData() != null) {
+                        SharedPreferenceManager.INSTANCE.setUserLogin(true);
+                        SharedPreferenceManager.INSTANCE.setUserData(responseLogin.getData());
+                        Intent intent = new Intent("VERIFICATION_COMPLETE");
+                        sendBroadcast(intent);
+                        startActivity(new Intent(getApplicationContext(), MainActivity.class));
+                        finishAffinity();
+                    }else {
+                        navigateToCreateAccount();
                     }
-                }).addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                        hideProgress();
-                    }
-                });
+                } else {
+                    navigateToCreateAccount();
+                }
+                loader.hideProgress();
+
+
+            } else if (responseLoginNetworkResult instanceof NetworkResult.Error) {
+
+                loader.hideProgress();
+
+                if (responseLoginNetworkResult.getResponseCode() != null && responseLoginNetworkResult.getResponseCode() == 401) {
+                    Intent intent = new Intent(getApplicationContext(), CreateAccount.class);
+                    intent.putExtra("phoneNumber", phoneNumber);
+                    startActivity(intent);
+                    finishAffinity();
+                } else {
+                    loader.showDialogMessage(responseLoginNetworkResult.getMessage(), getSupportFragmentManager());
+                }
+
+            }
+        };
+        viewModel.getLoginLiveData().observe(this, loginObserver);
     }
 
-    private void resendVerificationCode(String phoneNumber,
-                                        PhoneAuthProvider.ForceResendingToken token) {
-        showProgress();
-        PhoneAuthProvider.getInstance().verifyPhoneNumber(
-                phoneNumber,        // Phone number to verify
+    private void navigateToCreateAccount() {
+        Intent intent = new Intent(getApplicationContext(), CreateAccount.class);
+        intent.putExtra("phoneNumber", phoneNumber);
+        startActivity(intent);
+        finishAffinity();
+    }
+
+    void signInWithPhoneAuthCredential(PhoneAuthCredential credential) {
+        mAuth.signInWithCredential(credential).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+            @Override
+            public void onComplete(@NonNull Task<AuthResult> task) {
+                if (task.isSuccessful()) {
+                    // If OTP verification is successful, send broadcast and finish
+                    viewModel.loginApi(new RequestLogin(phoneNumber));
+                } else {
+                    loader.hideProgress();
+                    // Sign in failed, display a message and update the UI
+                    if (task.getException() instanceof FirebaseAuthInvalidCredentialsException) {
+                        loader.showDialogMessage("Invalid Code", getSupportFragmentManager());
+                    } else {
+                        loader.showDialogMessage("Signing Failed", getSupportFragmentManager());
+                    }
+                }
+            }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+                loader.hideProgress();
+            }
+        });
+    }
+
+    private void resendVerificationCode(String phoneNumber, PhoneAuthProvider.ForceResendingToken token) {
+        loader.showProgress();
+        PhoneAuthProvider.getInstance().verifyPhoneNumber(phoneNumber,        // Phone number to verify
                 60,                 // Timeout duration
                 TimeUnit.SECONDS,   // Unit of timeout
                 this,               // Activity (for callback binding)
@@ -329,17 +387,17 @@ public class Verification extends AppCompatActivity {
 
             @Override
             public void onVerificationFailed(@NonNull FirebaseException e) {
-                hideProgress();
+                loader.hideProgress();
                 Log.d(VerificationTAG, "Verification Failed = " + e.getMessage());
-                showDialogMessage("Verification Failed");
+                loader.showDialogMessage("Verification Failed", getSupportFragmentManager());
             }
 
             @Override
             public void onCodeSent(@NonNull String verificationId, @NonNull PhoneAuthProvider.ForceResendingToken forceResendingToken) {
                 super.onCodeSent(verificationId, forceResendingToken);
                 Log.d(VerificationTAG, "Code Sent");
-                hideProgress();
-                showDialogMessage("Code has been Resend");
+                loader.hideProgress();
+                loader.showDialogMessage("Code has been Resend", getSupportFragmentManager());
                 Verification.this.verificationId = verificationId;
                 TokenManager.getInstance().setForceResendingToken(forceResendingToken);
             }
@@ -347,44 +405,11 @@ public class Verification extends AppCompatActivity {
             @Override
             public void onCodeAutoRetrievalTimeOut(@NonNull String s) {
                 super.onCodeAutoRetrievalTimeOut(s);
-                hideProgress();
+                loader.hideProgress();
                 Log.d(VerificationTAG, "Time out");
             }
         };
     }
 
-
-    private void initProgressDialog() {
-        progressDialog = new ProgressDialog(this);
-        progressDialog.setCancelable(false);
-        progressDialog.setMessage("Loading...");
-    }
-
-    private void showProgress() {
-        if (progressDialog == null)
-            initProgressDialog();
-        progressDialog.show();
-    }
-
-    private void hideProgress() {
-        if (progressDialog == null)
-            initProgressDialog();
-        progressDialog.hide();
-    }
-
-    private void showDialogMessage(String message) {
-        dialogFragment.setMessage(message);
-        dialogFragment.show(getSupportFragmentManager(), MessageDialogFragment.DIALOG_TAG);
-    }
-
-    void hideDialogMessage() {
-        if (dialogFragment.getDialog() != null) {
-            if (dialogFragment.getDialog().isShowing()) {
-                dialogFragment.dismiss();
-            }
-        } else {
-            dialogFragment.dismiss();
-        }
-    }
 
 }

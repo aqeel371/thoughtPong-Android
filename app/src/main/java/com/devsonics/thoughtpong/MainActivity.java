@@ -13,8 +13,8 @@ import android.view.MenuItem;
 import android.view.Window;
 import android.view.WindowManager;
 
+import com.devsonics.thoughtpong.fragment.home.HomeFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.devsonics.thoughtpong.R;
 
 public class MainActivity extends AppCompatActivity implements BottomNavigationView.OnNavigationItemSelectedListener {
 

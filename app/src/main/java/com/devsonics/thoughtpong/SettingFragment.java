@@ -12,7 +12,7 @@ import android.view.ViewGroup;
 import android.widget.SeekBar;
 import android.widget.Switch;
 
-import com.devsonics.thoughtpong.R;
+import com.devsonics.thoughtpong.activities.login.Login;
 import com.google.firebase.auth.FirebaseAuth;
 
 

@@ -11,6 +11,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CompoundButton;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.Toast;
@@ -18,6 +19,7 @@ import android.widget.Toast;
 import com.devsonics.thoughtpong.activities.login.Login;
 import com.devsonics.thoughtpong.retofit_api.request_model.RequestCall;
 import com.devsonics.thoughtpong.utils.SharedPreferenceManager;
+import com.google.android.gms.common.util.SharedPreferencesUtils;
 import com.google.firebase.auth.FirebaseAuth;
 
 import java.util.Arrays;
@@ -47,10 +49,34 @@ public class SettingFragment extends Fragment {
         btnTermsConditions = view.findViewById(R.id.btn_terms_conditions);
         btnContactUs = view.findViewById(R.id.btn_contact_us);
         btnLogout = view.findViewById(R.id.btn_logout);
+        aSwitchStartupVolume.setChecked(SharedPreferenceManager.INSTANCE.getStartupSound());
+        seekBarVolume.setProgress(SharedPreferenceManager.INSTANCE.getSoundLevel());
         btnPrivacyPolicy.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(getContext(), PrivacyPolicy.class));
+            }
+        });
+        aSwitchStartupVolume.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+                SharedPreferenceManager.INSTANCE.setStartupSound(aSwitchStartupVolume.isChecked());
+            }
+        });
+        seekBarVolume.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                SharedPreferenceManager.INSTANCE.setSoundLevel(seekBarVolume.getProgress());
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
             }
         });
 

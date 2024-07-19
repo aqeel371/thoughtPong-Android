@@ -91,6 +91,8 @@ public class CallScreenActivity extends AppCompatActivity {
     private ListenerRegistration userListener = null;
     private final String listenerTag = "Listener";
     private boolean showAcceptRejectDialog = false;
+    private boolean isSpeaker = false;
+    private boolean isMute = false;
 
 
     @SuppressLint("SourceLockedOrientationActivity")
@@ -133,6 +135,21 @@ public class CallScreenActivity extends AppCompatActivity {
         btnMute = findViewById(R.id.btn_mute);
         ripplePulseLayout = findViewById(R.id.ripple_pulse_layout);
         waveView = findViewById(R.id.sound_waves);
+
+        btnSpeaker.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isSpeaker = !isSpeaker;
+                configSpeaker();
+            }
+        });
+        btnMute.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                isMute = !isMute;
+                configMic();
+            }
+        });
 
         ActivityCompat.requestPermissions(this, permissions, REQUEST_RECORD_AUDIO_PERMISSION);
 
@@ -226,6 +243,22 @@ public class CallScreenActivity extends AppCompatActivity {
         if (visualizer != null) {
             visualizer.setEnabled(true);
         }
+    }
+    private void configSpeaker(){
+        if(isSpeaker){
+            btnSpeaker.setImageResource(R.drawable.ic_speaker_loud);
+        } else {
+            btnSpeaker.setImageResource(R.drawable.ic_speaker);
+        }
+        mRtcEngine.setEnableSpeakerphone(isSpeaker);
+    }
+    private void configMic(){
+        if(isMute){
+            btnMute.setImageResource(R.drawable.ic_open_speaker);
+        } else {
+            btnMute.setImageResource(R.drawable.ic_mute_speaker);
+        }
+        mRtcEngine.muteLocalAudioStream(isMute);
     }
 
     @Override

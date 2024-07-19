@@ -5,6 +5,8 @@ object Constants {
     const val KEY_ACCESS_TOKEN = "access_token"
     const val KEY_REFRESH_TOKEN = "refresh_token"
     const val KEY_IS_USER_LOGIN = "user_login"
+    const val KEY_STARTUP = "start_up_sound"
+    const val KEY_SOUND_LEVEL = "sound_level"
 
     const val KEY_USER_ID = "user_id"
     const val KEY_USER_EMAIL = "user_email"

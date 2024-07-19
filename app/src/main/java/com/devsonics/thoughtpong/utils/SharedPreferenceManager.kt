@@ -18,6 +18,16 @@ object SharedPreferenceManager {
         set(value) {
             sharedPreferences.edit()?.putString(Constants.KEY_ACCESS_TOKEN, value)?.commit()
         }
+    var startupSound: Boolean
+        get() = sharedPreferences.getBoolean(Constants.KEY_STARTUP,true)
+        set(value) {
+            sharedPreferences.edit()?.putBoolean(Constants.KEY_STARTUP, value)?.commit()
+        }
+    var soundLevel: Int
+        get() = sharedPreferences.getInt(Constants.KEY_SOUND_LEVEL,100)
+        set(value) {
+            sharedPreferences.edit()?.putInt(Constants.KEY_SOUND_LEVEL, value)?.commit()
+        }
 
     var refreshToken: String?
         get() = sharedPreferences.getString(Constants.KEY_REFRESH_TOKEN, null)

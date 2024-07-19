@@ -218,6 +218,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="67dp"
                     android:layout_marginTop="17dp"
+                    android:visibility="gone"
                     android:background="@drawable/bg_tag"
                     android:paddingHorizontal="12dp"
                     app:layout_constraintEnd_toEndOf="parent"
@@ -248,7 +249,7 @@
                 </androidx.constraintlayout.widget.ConstraintLayout>
 
                 <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/btn_share_app"
+                    android:id="@+id/btn_logout"
                     android:layout_width="match_parent"
                     android:layout_height="67dp"
                     android:layout_marginTop="17dp"
@@ -266,7 +267,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:fontFamily="@font/encodesans_regular"
-                        android:text="Share App"
+                        android:text="Logout"
                         android:textAlignment="center"
                         android:textColor="@color/black"
                         android:textSize="14sp"
@@ -279,18 +280,17 @@
 
 
                 <androidx.constraintlayout.widget.ConstraintLayout
-                    android:id="@+id/btn_logout"
                     android:layout_width="match_parent"
                     android:layout_height="67dp"
                     android:layout_marginTop="17dp"
                     android:background="@drawable/bg_button"
                     android:paddingHorizontal="12dp"
+                    android:visibility="gone"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintDimensionRatio="w,1:1"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintHorizontal_bias="0.0"
                     app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@id/btn_share_app"
                     app:layout_constraintVertical_bias="0.0">
 
                     <TextView

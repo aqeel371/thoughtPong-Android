@@ -1,4 +1,4 @@
-package com.devsonics.thoughtpong.fragment.home
+package com.devsonics.thoughtpong.activities.waiting
 
 import android.app.Application
 import androidx.lifecycle.LiveData
@@ -10,33 +10,27 @@ import com.devsonics.thoughtpong.BaseViewModel
 import com.devsonics.thoughtpong.network.RetrofitInstance
 import com.devsonics.thoughtpong.retofit_api.request_model.RequestCall
 import com.devsonics.thoughtpong.retofit_api.response_model.ResponseCall
-import com.devsonics.thoughtpong.retofit_api.response_model.ResponseGetTopic
-import com.devsonics.thoughtpong.retofit_api.response_model.ResponseRefreshCall
 import com.devsonics.thoughtpong.retofit_api.response_model.UserData
 import com.devsonics.thoughtpong.utils.NetworkResult
 import kotlinx.coroutines.launch
 
-class HomeViewModel(app: Application) : BaseViewModel(app) {
+class CallScreenViewModel(app: Application) : BaseViewModel(app) {
 
-    private val _getTopicsLiveData = MutableLiveData<NetworkResult<ResponseGetTopic>>()
-    val getTopicsLiveData: LiveData<NetworkResult<ResponseGetTopic>> get() = _getTopicsLiveData
-
-    private val _callLiveData = MutableLiveData<NetworkResult<ResponseCall>>()
-    val callLiveData: LiveData<NetworkResult<ResponseCall>> get() = _callLiveData
-
-    private val _refreshCallLiveData = MutableLiveData<NetworkResult<ResponseRefreshCall>>()
-    val refreshCallLiveData: LiveData<NetworkResult<ResponseRefreshCall>> get() = _refreshCallLiveData
 
     private val _endCallLiveData = MutableLiveData<NetworkResult<ResponseCall>>()
     val endCallLiveData: LiveData<NetworkResult<ResponseCall>> get() = _endCallLiveData
 
-    /** Methods */
 
-    fun getTopicsApi() = viewModelScope.launch {
-        request(_getTopicsLiveData) {
-            RetrofitInstance.api.getTopics()
-        }
-    }
+    private val _user1EndCallLiveData = MutableLiveData<NetworkResult<ResponseCall>>()
+    val user1EndCallLiveData: LiveData<NetworkResult<ResponseCall>> get() = _user1EndCallLiveData
+
+    private val _userLiveData = MutableLiveData<NetworkResult<UserData>>()
+    val userLiveData: LiveData<NetworkResult<UserData>> get() = _userLiveData
+
+
+    private val _callLiveData = MutableLiveData<NetworkResult<ResponseCall>>()
+    val callLiveData: LiveData<NetworkResult<ResponseCall>> get() = _callLiveData
+
 
     fun callApi(call: RequestCall) = viewModelScope.launch {
         request(_callLiveData) {
@@ -44,25 +38,30 @@ class HomeViewModel(app: Application) : BaseViewModel(app) {
         }
     }
 
-    fun refreshCall() = viewModelScope.launch {
-        request(_refreshCallLiveData) {
-            RetrofitInstance.api.refreshCall()
-        }
-    }
-
     fun endCall(call: RequestCall) = viewModelScope.launch {
         request(_endCallLiveData) {
-            RetrofitInstance.api.callApi(call)
+            RetrofitInstance.api.endCallApi(call)
         }
     }
 
+    fun user1EndCall(call: RequestCall) = viewModelScope.launch {
+        request(_user1EndCallLiveData) {
+            RetrofitInstance.api.endCallApi(call)
+        }
+    }
+
+    fun getUser(id: String) = viewModelScope.launch {
+        request(_userLiveData) {
+            RetrofitInstance.api.getUser(id)
+        }
+    }
 
     /** Factory */
 
     companion object {
         fun createFactory(app: Application) = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                if (modelClass.isAssignableFrom(HomeViewModel::class.java)) {
+                if (modelClass.isAssignableFrom(CallScreenViewModel::class.java)) {
                     return modelClass.getConstructor(Application::class.java).newInstance(app)
                 }
 

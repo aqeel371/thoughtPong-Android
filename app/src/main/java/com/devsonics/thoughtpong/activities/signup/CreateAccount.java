@@ -22,7 +22,7 @@ import com.devsonics.thoughtpong.MainActivity;
 import com.devsonics.thoughtpong.R;
 import com.devsonics.thoughtpong.activities.login.Login;
 import com.devsonics.thoughtpong.activities.verification.VerificationViewModel;
-import com.devsonics.thoughtpong.retofit_api.model.ResponseLogin;
+import com.devsonics.thoughtpong.retofit_api.response_model.ResponseLogin;
 import com.devsonics.thoughtpong.retofit_api.request_model.RequestSignUp;
 import com.devsonics.thoughtpong.utils.Loader;
 import com.devsonics.thoughtpong.utils.NetworkResult;
@@ -36,7 +36,7 @@ public class CreateAccount extends AppCompatActivity {
 
     CreateAccountViewModel viewModel;
     Observer<? super NetworkResult<ResponseLogin>> signUpObserver;
-    private String phoneNumber = null;
+    private String phoneNumber;
     Loader loader;
 
 
@@ -51,7 +51,7 @@ public class CreateAccount extends AppCompatActivity {
          **Initialize ViewModel with Factory**
          */
 
-        ViewModelProvider.Factory factory = VerificationViewModel.Companion.createFactory(getApplication());
+        ViewModelProvider.Factory factory = CreateAccountViewModel.Companion.createFactory(getApplication());
         viewModel = new ViewModelProvider(this, factory).get(CreateAccountViewModel.class);
 
 
@@ -63,7 +63,8 @@ public class CreateAccount extends AppCompatActivity {
         }
 
         loader = new Loader(this);
-        phoneNumber = getIntent().getStringExtra("phoneNumber");
+        if (getIntent().getStringExtra("phoneNumber") != null)
+            phoneNumber = getIntent().getStringExtra("phoneNumber");
 
         initObserver();
 
@@ -99,9 +100,6 @@ public class CreateAccount extends AppCompatActivity {
 
                 viewModel.signUpApi(new RequestSignUp(email, fullName, phoneNumber));
 
-                // Here you can add your logic to create the account or perform login
-                startActivity(new Intent(CreateAccount.this, MainActivity.class));
-                finish();
 
 
             }
@@ -128,6 +126,8 @@ public class CreateAccount extends AppCompatActivity {
 
                     SharedPreferenceManager.INSTANCE.setUserLogin(true);
                     SharedPreferenceManager.INSTANCE.setUserData(responseLogin.getData());
+                    SharedPreferenceManager.INSTANCE.setAccessToken(responseLogin.getToken());
+                    SharedPreferenceManager.INSTANCE.setRefreshToken(responseLogin.getRefreshToken());
                     Intent intent = new Intent("VERIFICATION_COMPLETE");
                     sendBroadcast(intent);
                     startActivity(new Intent(getApplicationContext(), MainActivity.class));
@@ -136,7 +136,6 @@ public class CreateAccount extends AppCompatActivity {
                     loader.showDialogMessage(responseLoginNetworkResult.getMessage(), getSupportFragmentManager());
                 }
                 loader.hideProgress();
-
 
             } else if (responseLoginNetworkResult instanceof NetworkResult.Error) {
 

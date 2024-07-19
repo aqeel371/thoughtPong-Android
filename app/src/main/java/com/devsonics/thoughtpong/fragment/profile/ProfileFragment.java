@@ -1,6 +1,7 @@
-package com.devsonics.thoughtpong;
+package com.devsonics.thoughtpong.fragment.profile;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -9,6 +10,7 @@ import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,13 +23,38 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 
+import com.devsonics.thoughtpong.MainActivity;
+import com.devsonics.thoughtpong.activities.waiting.CallScreenActivity;
 import com.devsonics.thoughtpong.custumviews.SpinnerAdapter;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
+
 import com.devsonics.thoughtpong.R;
+import com.devsonics.thoughtpong.custumviews.Tag;
+import com.devsonics.thoughtpong.fragment.home.HomeViewModel;
+import com.devsonics.thoughtpong.retofit_api.response_model.ResponseCall;
+import com.devsonics.thoughtpong.retofit_api.response_model.ResponseUploadImage;
+import com.devsonics.thoughtpong.retofit_api.response_model.UserData;
+import com.devsonics.thoughtpong.utils.Loader;
+import com.devsonics.thoughtpong.utils.NetworkResult;
+import com.devsonics.thoughtpong.utils.SharedPreferenceManager;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class ProfileFragment extends Fragment {
+
+    ProfileViewModel viewModel;
+    private MainActivity mActivity;
+    Loader loader;
 
     TextView tvProfileName;
     EditText etFullName, etEmail;
@@ -46,6 +73,14 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        /**
+         **Initialize ViewModel with Factory**
+         */
+
+        ViewModelProvider.Factory factory = ProfileViewModel.Companion.createFactory(mActivity.getApplication());
+        viewModel = new ViewModelProvider(this, factory).get(ProfileViewModel.class);
+        loader = new Loader(mActivity);
 
         activityResultLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -69,6 +104,14 @@ public class ProfileFragment extends Fragment {
 
                     if (bitmap != null) {
                         ivProfilePic.setImageBitmap(bitmap);
+
+                        String filePath = getRealPathFromURI(mImageCaptureUri);
+                        File file = new File(filePath);
+                        RequestBody requestFile = RequestBody.create(MediaType.parse("image/png"), file);
+
+                        // MultipartBody.Part is used to send also the actual file name
+                        MultipartBody.Part body = MultipartBody.Part.createFormData("image", file.getName(), requestFile);
+                        viewModel.uploadImageApi(body);
                     }
                 }
         );
@@ -92,6 +135,9 @@ public class ProfileFragment extends Fragment {
         etFullName.setHint("Floyd Miles");
         etEmail.setHint("Floyd.Miles@gmail.com");
         ivProfilePic.setImageDrawable(getResources().getDrawable(R.drawable.pp));
+
+
+        initObserver();
 
         // Define topics and corresponding icons
         String[] topics = getResources().getStringArray(R.array.topics_array);
@@ -146,5 +192,34 @@ public class ProfileFragment extends Fragment {
         cursor.moveToFirst();
 
         return cursor.getString(column_index);
+    }
+
+    private void initObserver() {
+        Observer<? super NetworkResult<ResponseUploadImage>> uploadImageObserver = (Observer<NetworkResult<ResponseUploadImage>>) response -> {
+            if (response instanceof NetworkResult.Loading) {
+
+                loader.showProgress();
+            } else if (response instanceof NetworkResult.Success) {
+
+                UserData data = SharedPreferenceManager.INSTANCE.getUserData();
+                data.setImage(response.getData().getSuccess());
+                SharedPreferenceManager.INSTANCE.setUserData(data);
+                Toast.makeText(mActivity, "Image Uploaded Successfully", Toast.LENGTH_SHORT).show();
+                loader.hideProgress();
+
+            } else if (response instanceof NetworkResult.Error) {
+                Log.d("GetTopicsApiResponse", response.getResponseCode() + " " + response.getMessage());
+                loader.hideProgress();
+                loader.showDialogMessage(response.getMessage(), mActivity.getSupportFragmentManager());
+            }
+        };
+
+        viewModel.getUploadImageLiveData().observe(getViewLifecycleOwner(), uploadImageObserver);
+    }
+
+    @Override
+    public void onAttach(@NonNull Context context) {
+        super.onAttach(context);
+        mActivity = (MainActivity) context;
     }
 }

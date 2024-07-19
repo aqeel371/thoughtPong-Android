@@ -1,4 +1,4 @@
-package com.devsonics.thoughtpong.retofit_api.model
+package com.devsonics.thoughtpong.retofit_api.response_model
 
 class ResponseGetTopic : ArrayList<ResponseGetTopic.ResponseGetTopicItem>(){
     data class ResponseGetTopicItem(

@@ -10,7 +10,7 @@ import androidx.lifecycle.viewModelScope
 
 import com.devsonics.thoughtpong.BaseViewModel
 import com.devsonics.thoughtpong.retofit_api.request_model.RequestLogin
-import com.devsonics.thoughtpong.retofit_api.model.ResponseLogin
+import com.devsonics.thoughtpong.retofit_api.response_model.ResponseLogin
 import com.devsonics.thoughtpong.utils.NetworkResult
 import kotlinx.coroutines.launch
 import com.devsonics.thoughtpong.network.RetrofitInstance

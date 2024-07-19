@@ -17,9 +17,9 @@ object RetrofitInstance {
     }
 
     private val client = OkHttpClient.Builder().apply {
-        addInterceptor(AuthInterceptor())
         addInterceptor(logging)
         authenticator(ForbiddenAuthenticator())
+        addInterceptor(AuthInterceptor())
     }.build()
 
     val api: ApiService by lazy {

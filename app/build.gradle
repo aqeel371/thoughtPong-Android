@@ -47,6 +47,7 @@ dependencies {
     implementation 'de.hdodenhof:circleimageview:3.1.0'
     implementation platform('com.google.firebase:firebase-bom:33.1.1')
     implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.googlecode.libphonenumber:libphonenumber:8.12.47'
     implementation("androidx.browser:browser:1.8.0")
@@ -66,5 +67,9 @@ dependencies {
     implementation ("com.github.bumptech.glide:glide:4.14.2")
     // Skip this if you don't want to use integration libraries or configure Glide.
     annotationProcessor ("com.github.bumptech.glide:compiler:4.14.2")
+
+    // Lottie
+    def lottieVersion = "3.4.0"
+    implementation ("com.airbnb.android:lottie:$lottieVersion")
 
 }

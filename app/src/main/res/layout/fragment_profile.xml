@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="#252831"
     android:fillViewport="true"
-    tools:context=".ProfileFragment">
+    tools:context=".fragment.profile.ProfileFragment">
 
     <RelativeLayout
         android:layout_width="match_parent"

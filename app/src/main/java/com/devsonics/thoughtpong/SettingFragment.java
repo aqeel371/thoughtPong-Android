@@ -13,6 +13,7 @@ import android.widget.SeekBar;
 import android.widget.Switch;
 
 import com.devsonics.thoughtpong.activities.login.Login;
+import com.devsonics.thoughtpong.utils.SharedPreferenceManager;
 import com.google.firebase.auth.FirebaseAuth;
 
 
@@ -47,6 +48,8 @@ public class SettingFragment extends Fragment {
 
         btnLogout.setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
+            SharedPreferenceManager.INSTANCE.setUserData(null);
+            SharedPreferenceManager.INSTANCE.setUserLogin(false);
             startActivity(new Intent(requireActivity(), Login.class));
             requireActivity().finishAffinity();
         });

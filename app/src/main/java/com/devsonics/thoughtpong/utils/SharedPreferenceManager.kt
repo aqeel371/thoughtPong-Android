@@ -2,7 +2,7 @@ package com.devsonics.thoughtpong.utils
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.devsonics.thoughtpong.retofit_api.model.UserData
+import com.devsonics.thoughtpong.retofit_api.response_model.UserData
 
 object SharedPreferenceManager {
 
@@ -16,35 +16,35 @@ object SharedPreferenceManager {
     var accessToken: String?
         get() = sharedPreferences.getString(Constants.KEY_ACCESS_TOKEN, null)
         set(value) {
-            sharedPreferences.edit()?.putString(Constants.KEY_ACCESS_TOKEN, value)?.apply()
+            sharedPreferences.edit()?.putString(Constants.KEY_ACCESS_TOKEN, value)?.commit()
         }
 
     var refreshToken: String?
         get() = sharedPreferences.getString(Constants.KEY_REFRESH_TOKEN, null)
         set(value) {
-            sharedPreferences.edit()?.putString(Constants.KEY_REFRESH_TOKEN, value)?.apply()
+            sharedPreferences.edit()?.putString(Constants.KEY_REFRESH_TOKEN, value)?.commit()
         }
 
     var isUserLogin: Boolean
         get() = sharedPreferences.getBoolean(Constants.KEY_IS_USER_LOGIN, false)
         set(value) {
-            sharedPreferences.edit()?.putBoolean(Constants.KEY_IS_USER_LOGIN, value)?.apply()
+            sharedPreferences.edit()?.putBoolean(Constants.KEY_IS_USER_LOGIN, value)?.commit()
         }
 
     fun setUserData(userData: UserData?) {
         if (userData == null) {
-            sharedPreferences.edit()?.remove(Constants.KEY_USER_ID)?.apply()
-            sharedPreferences.edit()?.remove(Constants.KEY_USER_EMAIL)?.apply()
-            sharedPreferences.edit()?.remove(Constants.KEY_USER_PHONE)?.apply()
-            sharedPreferences.edit()?.remove(Constants.KEY_USER_FULL_NAME)?.apply()
-            sharedPreferences.edit()?.remove(Constants.KEY_USER_IMAGE)?.apply()
+            sharedPreferences.edit()?.remove(Constants.KEY_USER_ID)?.commit()
+            sharedPreferences.edit()?.remove(Constants.KEY_USER_EMAIL)?.commit()
+            sharedPreferences.edit()?.remove(Constants.KEY_USER_PHONE)?.commit()
+            sharedPreferences.edit()?.remove(Constants.KEY_USER_FULL_NAME)?.commit()
+            sharedPreferences.edit()?.remove(Constants.KEY_USER_IMAGE)?.commit()
             return
         }
-        sharedPreferences.edit()?.putLong(Constants.KEY_USER_ID, userData.getid())?.apply()
-        sharedPreferences.edit()?.putString(Constants.KEY_USER_EMAIL, userData.email)?.apply()
-        sharedPreferences.edit()?.putString(Constants.KEY_USER_PHONE, userData.phone)?.apply()
-        sharedPreferences.edit()?.putString(Constants.KEY_USER_FULL_NAME, userData.fullName)?.apply()
-        sharedPreferences.edit()?.putString(Constants.KEY_USER_IMAGE, userData.image)?.apply()
+        sharedPreferences.edit()?.putLong(Constants.KEY_USER_ID, userData.getId())?.commit()
+        sharedPreferences.edit()?.putString(Constants.KEY_USER_EMAIL, userData.email)?.commit()
+        sharedPreferences.edit()?.putString(Constants.KEY_USER_PHONE, userData.phone)?.commit()
+        sharedPreferences.edit()?.putString(Constants.KEY_USER_FULL_NAME, userData.fullName)?.commit()
+        sharedPreferences.edit()?.putString(Constants.KEY_USER_IMAGE, userData.image)?.commit()
     }
 
     fun getUserData(): UserData? {

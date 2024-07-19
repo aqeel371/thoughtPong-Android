@@ -23,7 +23,7 @@ class ForbiddenAuthenticator : Authenticator {
         println("Challenges: ${response.challenges()}")
         if (response.request.url.toString().contains("login"))
             return null
-        if (response.request.url.toString().contains("login"))
+        if (response.request.url.toString().contains("signup"))
             return null
         synchronized(this) {
 
@@ -36,6 +36,7 @@ class ForbiddenAuthenticator : Authenticator {
             }
 
             SharedPreferenceManager.accessToken = token
+//            SharedPreferenceManager.accessToken = token
             SharedPreferenceManager.refreshToken = refreshToken
 
             return response.request.newBuilder()

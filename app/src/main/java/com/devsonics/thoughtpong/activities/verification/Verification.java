@@ -25,9 +25,8 @@ import android.widget.TextView;
 import com.devsonics.thoughtpong.activities.signup.CreateAccount;
 import com.devsonics.thoughtpong.MainActivity;
 import com.devsonics.thoughtpong.R;
-import com.devsonics.thoughtpong.dialog.MessageDialogFragment;
 import com.devsonics.thoughtpong.retofit_api.request_model.RequestLogin;
-import com.devsonics.thoughtpong.retofit_api.model.ResponseLogin;
+import com.devsonics.thoughtpong.retofit_api.response_model.ResponseLogin;
 import com.devsonics.thoughtpong.token_manager.TokenManager;
 import com.devsonics.thoughtpong.utils.Loader;
 import com.devsonics.thoughtpong.utils.NetworkResult;
@@ -304,6 +303,8 @@ public class Verification extends AppCompatActivity {
                     if (responseLogin.getData() != null) {
                         SharedPreferenceManager.INSTANCE.setUserLogin(true);
                         SharedPreferenceManager.INSTANCE.setUserData(responseLogin.getData());
+                        SharedPreferenceManager.INSTANCE.setAccessToken(responseLogin.getToken());
+                        SharedPreferenceManager.INSTANCE.setRefreshToken(responseLogin.getRefreshToken());
                         Intent intent = new Intent("VERIFICATION_COMPLETE");
                         sendBroadcast(intent);
                         startActivity(new Intent(getApplicationContext(), MainActivity.class));

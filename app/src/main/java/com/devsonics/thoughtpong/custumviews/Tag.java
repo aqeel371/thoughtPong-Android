@@ -1,30 +1,34 @@
 
 package com.devsonics.thoughtpong.custumviews;
 
+import android.net.Uri;
+
+
 public class Tag {
-    private Long id;
-    String imageUrl;
+    private int id;
+    Uri imageUrl;
     private String name;
     private int iconResId;
     private boolean isSelected = false; // Track selection state
 
 
-    public Tag(String name, int iconResId, String imageUrl) {
+    public Tag(Integer id, String name, int iconResId, Uri imageUrl) {
+        this.id = id;
         this.name = name;
         this.iconResId = iconResId;
         this.isSelected = false; // Initialize as not selected
         this.imageUrl = imageUrl;
     }
 
-    public Long getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(int id) {
         this.id = id;
     }
 
-    public String getImageUrl() {
+    public Uri getImageUrl() {
         return imageUrl;
     }
 

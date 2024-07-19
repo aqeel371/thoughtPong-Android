@@ -1,4 +1,4 @@
-package com.devsonics.thoughtpong.retofit_api.model;
+package com.devsonics.thoughtpong.retofit_api.response_model;
 
 public class UserData {
     private String image;
@@ -15,6 +15,10 @@ public class UserData {
         this.image = value;
     }
 
+    public long getId() {
+        return id;
+    }
+
     public String getPhone() {
         return phone;
     }
@@ -29,10 +33,6 @@ public class UserData {
 
     public void setFullName(String value) {
         this.fullName = value;
-    }
-
-    public long getid() {
-        return id;
     }
 
     public void setid(long value) {

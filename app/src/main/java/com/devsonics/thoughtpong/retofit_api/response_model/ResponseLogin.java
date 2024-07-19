@@ -1,15 +1,10 @@
-package com.devsonics.thoughtpong.retofit_api.model;
+package com.devsonics.thoughtpong.retofit_api.response_model;
 
 public class ResponseLogin {
     private UserData data;
-    private String error;
     private long expIn;
     private String token;
     private String refreshToken;
-
-    public String getError() {return error;}
-
-    public void setError(String error) {this.error = error;}
 
     public UserData getData() { return data; }
     public void setData(UserData value) { this.data = value; }

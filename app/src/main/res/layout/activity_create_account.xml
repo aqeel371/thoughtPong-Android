@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:paddingHorizontal="24dp"
     android:background="@color/white"
-    tools:context=".CreateAccount">
+    tools:context=".activities.signup.CreateAccount">
 
     <TextView
         android:id="@+id/tv_profile_name"

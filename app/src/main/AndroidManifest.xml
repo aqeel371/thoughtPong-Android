@@ -8,7 +8,25 @@
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage"/>
 
+
+    <!--Required permissions-->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
+    <!--Optional permissions-->
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.BLUETOOTH"/>
+    <!-- For devices running Android 12 (API level 32) or higher and integrating Agora Video SDK version v4.1.0 or lower, you also need to add the following permissions -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+    <!-- For Android 12 or higher, the following permissions are also required -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN"/>
+
+
     <application
+        android:name=".MyApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -20,7 +38,7 @@
         tools:targetApi="31">
 
         <activity
-            android:name=".CallScreenActivity"
+            android:name=".activities.waiting.CallScreenActivity"
             android:exported="true" >
 
         </activity>
@@ -32,15 +50,15 @@
             android:exported="true">
         </activity>
         <activity
-            android:name=".CreateAccount"
+            android:name=".activities.signup.CreateAccount"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".Verification"
+            android:name=".activities.verification.Verification"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name=".Login"
+            android:name=".activities.login.Login"
             android:exported="false"
             android:windowSoftInputMode="adjustResize" />
         <activity

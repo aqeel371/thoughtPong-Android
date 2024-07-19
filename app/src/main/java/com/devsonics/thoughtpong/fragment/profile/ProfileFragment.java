@@ -22,10 +22,12 @@ import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.bumptech.glide.Glide;
 import com.devsonics.thoughtpong.MainActivity;
 import com.devsonics.thoughtpong.activities.waiting.CallScreenActivity;
 import com.devsonics.thoughtpong.custumviews.SpinnerAdapter;
@@ -38,7 +40,9 @@ import okhttp3.RequestBody;
 import com.devsonics.thoughtpong.R;
 import com.devsonics.thoughtpong.custumviews.Tag;
 import com.devsonics.thoughtpong.fragment.home.HomeViewModel;
+import com.devsonics.thoughtpong.retofit_api.request_model.RequestUpdateProfile;
 import com.devsonics.thoughtpong.retofit_api.response_model.ResponseCall;
+import com.devsonics.thoughtpong.retofit_api.response_model.ResponseUpdateProfile;
 import com.devsonics.thoughtpong.retofit_api.response_model.ResponseUploadImage;
 import com.devsonics.thoughtpong.retofit_api.response_model.UserData;
 import com.devsonics.thoughtpong.utils.Loader;
@@ -59,12 +63,14 @@ public class ProfileFragment extends Fragment {
     TextView tvProfileName;
     EditText etFullName, etEmail;
     CircleImageView ivProfilePic, ivChangeProfilePic;
+    ConstraintLayout btnSave;
     private Spinner select_topic_spinner;
     private Uri mImageCaptureUri;
 
     private static final int PICK_FROM_FILE = 2;
 
     private ActivityResultLauncher<Intent> activityResultLauncher;
+    private Uri imageUri = null;
 
     public ProfileFragment() {
         // Required empty public constructor
@@ -82,44 +88,31 @@ public class ProfileFragment extends Fragment {
         viewModel = new ViewModelProvider(this, factory).get(ProfileViewModel.class);
         loader = new Loader(mActivity);
 
-        activityResultLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result.getResultCode() != Activity.RESULT_OK) return;
-                    Intent data = result.getData();
+        activityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+            if (result.getResultCode() != Activity.RESULT_OK) return;
+            Intent data = result.getData();
 
-                    Bitmap bitmap = null;
-                    String path = "";
+            Bitmap bitmap = null;
+            String path = "";
 
-                    if (data != null && data.getData() != null) {
-                        mImageCaptureUri = data.getData();
-                        path = getRealPathFromURI(mImageCaptureUri); // from Gallery
+            if (data != null && data.getData() != null) {
+                mImageCaptureUri = data.getData();
+                path = getRealPathFromURI(mImageCaptureUri); // from Gallery
 
-                        if (path == null)
-                            path = mImageCaptureUri.getPath(); // from File Manager
+                if (path == null) path = mImageCaptureUri.getPath(); // from File Manager
 
-                        if (path != null)
-                            bitmap = BitmapFactory.decodeFile(path);
-                    }
+                if (path != null) bitmap = BitmapFactory.decodeFile(path);
+            }
 
-                    if (bitmap != null) {
-                        ivProfilePic.setImageBitmap(bitmap);
-
-                        String filePath = getRealPathFromURI(mImageCaptureUri);
-                        File file = new File(filePath);
-                        RequestBody requestFile = RequestBody.create(MediaType.parse("image/png"), file);
-
-                        // MultipartBody.Part is used to send also the actual file name
-                        MultipartBody.Part body = MultipartBody.Part.createFormData("image", file.getName(), requestFile);
-                        viewModel.uploadImageApi(body);
-                    }
-                }
-        );
+            if (bitmap != null) {
+                ivProfilePic.setImageBitmap(bitmap);
+                imageUri = mImageCaptureUri;
+            }
+        });
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
         // Initialize views
@@ -129,6 +122,7 @@ public class ProfileFragment extends Fragment {
         ivProfilePic = view.findViewById(R.id.profile_image);
         ivChangeProfilePic = view.findViewById(R.id.change_profile_image);
         select_topic_spinner = view.findViewById(R.id.select_topic_spinner);
+        btnSave = view.findViewById(R.id.btn_save);
 
         // Set default values
         tvProfileName.setText("Floyd Miles"); // Set Name
@@ -138,20 +132,12 @@ public class ProfileFragment extends Fragment {
 
 
         initObserver();
+        setUserData();
 
+        btnSave.setOnClickListener(v -> updateProfile());
         // Define topics and corresponding icons
         String[] topics = getResources().getStringArray(R.array.topics_array);
-        int[] icons = {
-                R.drawable.ic_photography,
-                R.drawable.ic_music,
-                R.drawable.ic_writing,
-                R.drawable.ic_food,
-                R.drawable.ic_nature,
-                R.drawable.ic_fashion,
-                R.drawable.ic_entertainment,
-                R.drawable.ic_game,
-                R.drawable.ic_cooking
-        };
+        int[] icons = {R.drawable.ic_photography, R.drawable.ic_music, R.drawable.ic_writing, R.drawable.ic_food, R.drawable.ic_nature, R.drawable.ic_fashion, R.drawable.ic_entertainment, R.drawable.ic_game, R.drawable.ic_cooking};
 
         // Set up the Spinner with the custom adapter
         SpinnerAdapter adapter = new SpinnerAdapter(requireContext(), topics, icons);
@@ -163,14 +149,58 @@ public class ProfileFragment extends Fragment {
         return view;
     }
 
+    private void setUserData() {
+        String email = SharedPreferenceManager.INSTANCE.getUserData().getEmail();
+        String fullName = SharedPreferenceManager.INSTANCE.getUserData().getFullName();
+        String profileImage = SharedPreferenceManager.INSTANCE.getUserData().getImage();
+        etEmail.setText(email);
+        etFullName.setText(fullName);
+        tvProfileName.setText(fullName);
+        if (profileImage != null && !profileImage.isEmpty()) {
+            String profileUrl = "https://bdpos.store/api/thought/Images/" + profileImage;
+            Glide.with(this).load(profileUrl).into(ivProfilePic);
+        }
+
+    }
+
+    private void updateProfile() {
+
+        if (imageUri != null) {
+
+            String filePath = getRealPathFromURI(mImageCaptureUri);
+            File file = new File(filePath);
+            RequestBody requestFile = RequestBody.create(MediaType.parse("image/png"), file);
+
+            // MultipartBody.Part is used to send also the actual file name
+            MultipartBody.Part body = MultipartBody.Part.createFormData("image", file.getName(), requestFile);
+            viewModel.uploadImageApi(body);
+        } else {
+            if (etEmail.getText().toString().trim().isEmpty()) {
+                etEmail.setError("can't be null");
+                return;
+            }
+            if (etFullName.getText().toString().trim().isEmpty()) {
+                etFullName.setError("can't be null");
+                return;
+            }
+
+            String email = etEmail.getText().toString().trim();
+            String fullName = etFullName.getText().toString().trim();
+
+            RequestUpdateProfile requestUpdateProfile = new RequestUpdateProfile(email,null, fullName);
+
+            viewModel.updateProfile(requestUpdateProfile);
+
+        }
+    }
+
     private void openImagePicker() {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         activityResultLauncher.launch(intent);
     }
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode == PICK_FROM_FILE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -204,7 +234,46 @@ public class ProfileFragment extends Fragment {
                 UserData data = SharedPreferenceManager.INSTANCE.getUserData();
                 data.setImage(response.getData().getSuccess());
                 SharedPreferenceManager.INSTANCE.setUserData(data);
-                Toast.makeText(mActivity, "Image Uploaded Successfully", Toast.LENGTH_SHORT).show();
+
+                if (etEmail.getText().toString().trim().isEmpty()) {
+                    etEmail.setError("can't be null");
+                    return;
+                }
+                if (etFullName.getText().toString().trim().isEmpty()) {
+                    etFullName.setError("can't be null");
+                    return;
+                }
+
+                String email = etEmail.getText().toString().trim();
+                String fullName = etFullName.getText().toString().trim();
+
+                RequestUpdateProfile requestUpdateProfile = new RequestUpdateProfile(email, response.getData().getSuccess(), fullName);
+                viewModel.updateProfile(requestUpdateProfile);
+                loader.hideProgress();
+
+            } else if (response instanceof NetworkResult.Error) {
+                Log.d("GetTopicsApiResponse", response.getResponseCode() + " " + response.getMessage());
+                loader.hideProgress();
+                loader.showDialogMessage(response.getMessage(), mActivity.getSupportFragmentManager());
+            }
+        };
+        Observer<? super NetworkResult<ResponseUpdateProfile>> updateProfileObserver = (Observer<NetworkResult<ResponseUpdateProfile>>) response -> {
+            if (response instanceof NetworkResult.Loading) {
+
+                loader.showProgress();
+            } else if (response instanceof NetworkResult.Success) {
+
+                UserData data = new UserData();
+
+                data.setImage(response.getData().getImage());
+                data.setid(response.getData().getId());
+                data.setEmail(response.getData().getEmail());
+                data.setPhone(response.getData().getPhone());
+                data.setFullName(response.getData().getFullName());
+
+                SharedPreferenceManager.INSTANCE.setUserData(data);
+
+                Toast.makeText(mActivity, "Updated Successfully", Toast.LENGTH_SHORT).show();
                 loader.hideProgress();
 
             } else if (response instanceof NetworkResult.Error) {
@@ -215,6 +284,7 @@ public class ProfileFragment extends Fragment {
         };
 
         viewModel.getUploadImageLiveData().observe(getViewLifecycleOwner(), uploadImageObserver);
+        viewModel.getUpdateProfileLiveData().observe(getViewLifecycleOwner(), updateProfileObserver);
     }
 
     @Override

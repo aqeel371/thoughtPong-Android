@@ -8,7 +8,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.devsonics.thoughtpong.BaseViewModel
 import com.devsonics.thoughtpong.network.RetrofitInstance
+import com.devsonics.thoughtpong.retofit_api.request_model.RequestCall
+import com.devsonics.thoughtpong.retofit_api.request_model.RequestUpdateProfile
 import com.devsonics.thoughtpong.retofit_api.response_model.ResponseGetTopic
+import com.devsonics.thoughtpong.retofit_api.response_model.ResponseUpdateProfile
 import com.devsonics.thoughtpong.retofit_api.response_model.ResponseUploadImage
 import com.devsonics.thoughtpong.utils.NetworkResult
 import kotlinx.coroutines.launch
@@ -21,11 +24,20 @@ class ProfileViewModel(app: Application) : BaseViewModel(app) {
     val uploadImageLiveData: LiveData<NetworkResult<ResponseUploadImage>> get() = _uploadImageLiveData
 
 
+    private val _updateProfileLiveData = MutableLiveData<NetworkResult<ResponseUpdateProfile>>()
+    val updateProfileLiveData: LiveData<NetworkResult<ResponseUpdateProfile>> get() = _updateProfileLiveData
+
+
     /** Methods */
 
     fun uploadImageApi(image: MultipartBody.Part) = viewModelScope.launch {
         request(_uploadImageLiveData) {
             RetrofitInstance.api.uploadImage(image)
+        }
+    }
+    fun updateProfile(call: RequestUpdateProfile) = viewModelScope.launch {
+        request(_updateProfileLiveData) {
+            RetrofitInstance.api.updateProfile(call)
         }
     }
 

@@ -7,8 +7,10 @@ import com.devsonics.thoughtpong.retofit_api.response_model.ResponseLogin
 import com.devsonics.thoughtpong.retofit_api.response_model.ResponseRefreshToken
 import com.devsonics.thoughtpong.retofit_api.request_model.RequestLogin
 import com.devsonics.thoughtpong.retofit_api.request_model.RequestSignUp
+import com.devsonics.thoughtpong.retofit_api.request_model.RequestUpdateProfile
 import com.devsonics.thoughtpong.retofit_api.response_model.ResponseCall
 import com.devsonics.thoughtpong.retofit_api.response_model.ResponseRefreshCall
+import com.devsonics.thoughtpong.retofit_api.response_model.ResponseUpdateProfile
 import com.devsonics.thoughtpong.retofit_api.response_model.ResponseUploadImage
 import com.devsonics.thoughtpong.retofit_api.response_model.UserData
 import com.devsonics.thoughtpong.utils.SharedPreferenceManager
@@ -52,6 +54,9 @@ interface ApiService {
     @PATCH("uploadImage")
     suspend fun uploadImage(@Part image :  MultipartBody.Part):Response<ResponseUploadImage>
 
+
+    @PATCH("updateProfile")
+    suspend fun updateProfile(@Body req: RequestUpdateProfile): Response<ResponseUpdateProfile>
 
     @GET("refreshToken")
     suspend fun refreshToken(@Header("Authorization") token: String = "Bearer ${SharedPreferenceManager.refreshToken}"):

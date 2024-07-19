@@ -26,6 +26,7 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.bumptech.glide.Glide;
 import com.devsonics.thoughtpong.MainActivity;
 import com.devsonics.thoughtpong.R;
 import com.devsonics.thoughtpong.custumviews.RipplePulseLayout;
@@ -50,11 +51,17 @@ import java.util.List;
 import java.util.Map;
 
 import de.hdodenhof.circleimageview.CircleImageView;
+import io.agora.rtc2.ChannelMediaOptions;
+import io.agora.rtc2.Constants;
+import io.agora.rtc2.IRtcEngineEventHandler;
+import io.agora.rtc2.RtcEngine;
+import io.agora.rtc2.RtcEngineConfig;
 
 public class CallScreenActivity extends AppCompatActivity {
 
     CallScreenViewModel viewModel;
     Loader loader;
+    UserData otherUserData;
 
 
     private static final int REQUEST_RECORD_AUDIO_PERMISSION = 200;
@@ -75,6 +82,7 @@ public class CallScreenActivity extends AppCompatActivity {
     private Visualizer visualizer;
     private String channelName = null;
     private String selectedTag = null;
+    private String token = null;
     private int userType = 0;
 
 
@@ -82,6 +90,7 @@ public class CallScreenActivity extends AppCompatActivity {
     private ListenerRegistration user2Listener = null;
     private ListenerRegistration userListener = null;
     private final String listenerTag = "Listener";
+    private boolean showAcceptRejectDialog = false;
 
 
     @SuppressLint("SourceLockedOrientationActivity")
@@ -113,6 +122,7 @@ public class CallScreenActivity extends AppCompatActivity {
 
         channelName = getIntent().getStringExtra("channelName");
         selectedTag = getIntent().getStringExtra("SelectedTag");
+        token = getIntent().getStringExtra("token");
         userType = getIntent().getIntExtra("userType", 0);
 
         callIcon = findViewById(R.id.icon_call);
@@ -149,12 +159,13 @@ public class CallScreenActivity extends AppCompatActivity {
             }
         }, 3000);*/
 
+        initAgora();
         if (userType == 2) {
-            Toast.makeText(this, "User 2 ", Toast.LENGTH_SHORT).show();
             listenerForUser2(channelName);
         } else if (userType == 1) {
-            Toast.makeText(this, "User 1 ", Toast.LENGTH_SHORT).show();
             listenerForUser1(channelName);
+            Toast.makeText(this, channelName, Toast.LENGTH_SHORT).show();
+            joinChannel();
         }
     }
 
@@ -220,7 +231,15 @@ public class CallScreenActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        stopCallTimer();
+        if (mRtcEngine != null) {
+            // Leave the channel
+            mRtcEngine.leaveChannel();
+            mRtcEngine = null;
+            // Destroy the engine
+            RtcEngine.destroy();
+        }
+
+       /* stopCallTimer();
         if (visualizer != null) {
             visualizer.release();
             visualizer = null;
@@ -234,7 +253,7 @@ public class CallScreenActivity extends AppCompatActivity {
             } finally {
                 mediaPlayer = null;
             }
-        }
+        }*/
     }
 
     private void playAudioFile() {
@@ -296,6 +315,13 @@ public class CallScreenActivity extends AppCompatActivity {
         Log.d("RequestCall", "End call RoomName: " + channelName + " tagIds: " + selectedTag + " params:" + tagIds);
         RequestCall requestCall = new RequestCall(channelName, tagIds);
         viewModel.endCall(requestCall);
+        if (mRtcEngine != null) {
+            // Leave the channel
+            mRtcEngine.leaveChannel();
+            mRtcEngine = null;
+            // Destroy the engine
+            RtcEngine.destroy();
+        }
 
         /*stopCallTimer();
         if (visualizer != null) {
@@ -333,6 +359,7 @@ public class CallScreenActivity extends AppCompatActivity {
                 if (users2Value != null) {
                     if (SharedPreferenceManager.INSTANCE.getUserData() != null) {
                         if (users2Value != SharedPreferenceManager.INSTANCE.getUserData().getId()) {
+                            showAcceptRejectDialog = true;
                             viewModel.getUser(String.valueOf(users2Value));
                         }
                     }
@@ -376,6 +403,8 @@ public class CallScreenActivity extends AppCompatActivity {
                     viewModel.endCall(requestCall);
                 } else {
                     //User 1 Accept the call
+                    Toast.makeText(this, channelName + " call Accepted", Toast.LENGTH_SHORT).show();
+                    joinChannel();
                 }
 //                    }
             }
@@ -393,7 +422,8 @@ public class CallScreenActivity extends AppCompatActivity {
             } else if (response instanceof NetworkResult.Success) {
                 Map<String, String> data = new HashMap<>();
 //                data.put("NameT", channelName);
-                data.put("NameT", generateRandomName());                db.collection("collectionT").document("IDT").set(data).addOnSuccessListener(unused -> {
+                data.put("NameT", generateRandomName());
+                db.collection("collectionT").document("IDT").set(data).addOnSuccessListener(unused -> {
                 }).addOnFailureListener(e -> {
                     Toast.makeText(this, "IDT Failure: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
@@ -491,7 +521,12 @@ public class CallScreenActivity extends AppCompatActivity {
 
                 loader.showProgress();
             } else if (response instanceof NetworkResult.Success) {
-                showAcceptRejectDialog(response.getData());
+                if (showAcceptRejectDialog) {
+                    showAcceptRejectDialog(response.getData());
+                } else {
+                    otherUserData = response.getData();
+                    UpdateOtherUserInf0();
+                }
 
                 loader.hideProgress();
 
@@ -511,6 +546,16 @@ public class CallScreenActivity extends AppCompatActivity {
         viewModel.getUserLiveData().observe(this, getUserObserver);
     }
 
+    private void UpdateOtherUserInf0() {
+
+        callTimerOrWaitingText.setText(otherUserData.getFullName());
+        if (otherUserData.getImage() != null && !otherUserData.getImage().isEmpty()) {
+            String profileUrl = "https://bdpos.store/api/thought/Images/" + otherUserData.getImage();
+            Glide.with(this).load(profileUrl).into(callIcon);
+        }
+
+    }
+
     private void showAcceptRejectDialog(UserData data) {
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -519,8 +564,6 @@ public class CallScreenActivity extends AppCompatActivity {
                     Map<String, Boolean> isAccepted = new HashMap<>();
                     isAccepted.put("isAccepted", true);
                     db.collection("waiting").document(channelName).set(isAccepted).addOnSuccessListener(unused -> {
-                        Toast.makeText(this, "Accepted", Toast.LENGTH_SHORT).show();
-
                     }).addOnFailureListener(e -> {
                         Toast.makeText(this, "Failed to Accept : \n" + e.getMessage(), Toast.LENGTH_SHORT).show();
                     });
@@ -560,4 +603,72 @@ public class CallScreenActivity extends AppCompatActivity {
         }
         return randomName.toString();
     }
+
+    /**
+     * Agora
+     **/
+    private RtcEngine mRtcEngine;
+
+    private void initAgora() {
+        // Create an RtcEngineConfig object and configure it
+        RtcEngineConfig config = new RtcEngineConfig();
+        config.mContext = getBaseContext();
+        config.mAppId = "71e94636243f43799fa959a773e5712d";
+        config.mEventHandler = mRtcEventHandler;
+// Create and initialize the RtcEngine
+        try {
+            mRtcEngine = RtcEngine.create(config);
+        } catch (Exception e) {
+            Toast.makeText(this, "Agora Exception " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void joinChannel() {
+        ChannelMediaOptions options = new ChannelMediaOptions();
+// Set the user role to BROADCASTER or AUDIENCE according to the scenario
+        options.clientRoleType = Constants.CLIENT_ROLE_BROADCASTER;
+// In the live broadcast scenario, set the channel profile to BROADCASTING (live broadcast scenario)
+        options.channelProfile = Constants.CHANNEL_PROFILE_LIVE_BROADCASTING;
+// Publish the audio collected by the microphone
+        options.publishMicrophoneTrack = true;
+// Automatically subscribe to all audio streams
+        options.autoSubscribeAudio = true;
+// Use the temporary token to join the channel
+// Specify the user ID yourself and ensure it is unique within the channel
+        int userId = (int) SharedPreferenceManager.INSTANCE.getUserData().getId();
+        mRtcEngine.joinChannel(/*token*/null, channelName, userId, options);
+    }
+
+    private final IRtcEngineEventHandler mRtcEventHandler = new IRtcEngineEventHandler() {
+        // Callback when successfully joining the channel
+        @Override
+        public void onJoinChannelSuccess(String channel, int uid, int elapsed) {
+            super.onJoinChannelSuccess(channel, uid, elapsed);
+            runOnUiThread(() -> {
+                Toast.makeText(CallScreenActivity.this, "Join channel success", Toast.LENGTH_SHORT).show();
+            });
+        }
+
+        // Callback when a remote user or host joins the current channel
+        @Override
+        // Listen for remote hosts in the channel to get the host's uid information
+        public void onUserJoined(int uid, int elapsed) {
+            super.onUserJoined(uid, elapsed);
+            runOnUiThread(() -> {
+                Toast.makeText(CallScreenActivity.this, "User joined: " + uid, Toast.LENGTH_SHORT).show();
+                showAcceptRejectDialog = false;
+                viewModel.getUser(String.valueOf(uid));
+            });
+        }
+
+        // Callback when a remote user or host leaves the current channel
+        @Override
+        public void onUserOffline(int uid, int reason) {
+            super.onUserOffline(uid, reason);
+            runOnUiThread(() -> {
+                endCall();
+
+            });
+        }
+    };
 }

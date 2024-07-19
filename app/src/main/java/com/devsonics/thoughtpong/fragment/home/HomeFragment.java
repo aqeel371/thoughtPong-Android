@@ -183,6 +183,7 @@ public class HomeFragment extends Fragment {
                         intent.putExtra("channelName", randomNameForUser2);
                         intent.putExtra("userType", 2);
                         intent.putExtra("SelectedTag", selectedTagIds.toString());
+                        intent.putExtra("token", response.getData().getCallToken().getData().getToken());
                         startActivity(intent);
                     }).addOnFailureListener(e -> {
                         Toast.makeText(mActivity, "Failure: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -207,6 +208,7 @@ public class HomeFragment extends Fragment {
                         intent.putExtra("channelName", randomName);
                         intent.putExtra("userType", 1);
                         intent.putExtra("SelectedTag", selectedTagIds.toString());
+                        intent.putExtra("token", response.getData().getData().getToken());
                         startActivity(intent);
                     }).addOnFailureListener(e -> {
                         Toast.makeText(mActivity, "Failure: " + e.getMessage(), Toast.LENGTH_SHORT).show();
